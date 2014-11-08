@@ -7,40 +7,26 @@
 #include <string.h>
 #include "EEPROM.h"
 
+
+#include "HuggiArduino.h"
+#include "HuggiBuffer.h"
+
 #define HUGGI_PRESSURE_SENSOR_DEBUG
 #include "HuggiPressureSensor.h"
 
 
-#define nl '\n' // newline
 
-#define GoFirst()   strcmp(ID, otherId) < 0
+#define GoFirst(otherId)   strcmp(ID, otherId) < 0
 
-#define Baudrate    9600
-
-#define Syn         "H"
-#define Ack         "OK"
-#define Fin         "BYE"
-
-#define Nak         "OOPS"
-
-#define Keep_Alive  "LALA"
-
-#define DATA_MAX_SIZE       70      // max size of the data (name)
-
-#define ID_BUFF_SIZE        10+1    // id + end char
-#define DATA_BUFF_SIZE      1+DATA_MAX_SIZE+4+1 // 1:length, data, 4:checksum, 1:newline
-
-#define SYN_RL_TIMEOUT           400 // readline timeout
-#define ACK_RL_TIMEOUT           200 // readline timeout
 
 AltSoftSerial altSerial; //On Arduino Uno TX = pin 9 | RX = pin 8
 
-// buffer for the other arduino's id
+// buffer for the raw other arduino's id
 char myId[ID_BUFF_SIZE]       = {0};  
-char otherId[ID_BUFF_SIZE]    = {0};  
-// raw incoming data + data without length and checksum
+
+// raw incoming data
 char bufferIn[DATA_BUFF_SIZE] = {0};
-char dataIn[DATA_BUFF_SIZE]   = {0};
+
 // outgoing data: contains length, data and checksum
 char dataOut[DATA_BUFF_SIZE]  = {0};
 
@@ -51,21 +37,25 @@ int inputs[] = {A0, A5};
 HuggiPressureSensor sensor(inputs, INPUT_NBR);
 
 
-#define ID      "2-Uno"
+#define ID      "1-"
 #define myName  "Lucy Linder"
+
+HuggiBuffer huggiBuff;
+Hug_t * currentHug;
 
 // ---------------
 
 void setup() 
 {  
-  Serial.begin(Baudrate);
-  altSerial.begin(14400);//Baudrate);
+  Serial.begin(9600);//BT_BAUDRATE);
+  altSerial.begin(TS_BAUDRATE);
 
   Serial << "Hugginess :)" << nl;
   // data default
   encodeData(dataOut, myName);
   encodeData(myId, ID);
 
+  currentHug = huggiBuff.getAvail();
   sensor.calibrate();
 }
 
@@ -74,23 +64,40 @@ void setup()
 void loop() 
 {
 
-  if(sensor.isPressed() && handshake())
+  if(currentHug != NULL && 
+        sensor.isPressed() && handshake(currentHug->id))
   {
-    Serial << "HANDSHAKE OK WITH " << otherId << " !!" << nl;
+    Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
 
     long start = millis();
-    exchange();
-    int duration = millis() - start;
-    Serial << "DATA = " << dataIn << nl;
-    Serial << " HUG DURATION =~ " << duration << nl;
-    // delay(600);
+    if(exchange(currentHug->data))
+    {
+        currentHug->duration = millis() - start;
+        Serial << "DATA = " << currentHug->data << nl;
+        Serial << " HUG DURATION =~ " << currentHug->duration << nl;
+
+        huggiBuff.commit();
+        currentHug = huggiBuff.getAvail();
+    }
+
+  }
+
+  if(Serial.available())
+  {
+    char c = Serial.read();
+    if(c == nl)
+    {
+        while(!huggiBuff.isEmpty())
+        {
+            toString(Serial, *huggiBuff.getNext());
+        }
+    }
   }
 
 }
 
 // --------------
-
-bool exchange()
+bool exchange(char* data)
 {
     long lastReceived = millis();
 
@@ -130,7 +137,7 @@ bool exchange()
                     bufferIn[indexIn] = 0;
                     indexIn = 0;
 
-                    if(dataReceived = decodeData(bufferIn, dataIn))
+                    if(dataReceived = decodeData(bufferIn, data))
                         Serial << "    [1] rcvd " << bufferIn << nl;
                 }
             }
@@ -138,12 +145,14 @@ bool exchange()
     }
 
     Serial << "== End of HUG..." << nl;
+
+    return dataReceived;
 }
 
 
 // -----------------
 
-bool handshake()
+bool handshake(char * otherId)
 {
     bufferIn[0] = 0; // reset
 
@@ -155,6 +164,12 @@ bool handshake()
 
     if(!syn) return false;
 
+    if(strcmp(myId, bufferIn) == 0)
+    {
+        Serial << "LOOPBACK DETECTED -- check that the other device is ON" << nl;
+        return false;
+    }
+
     // check that id is not truncated
     bool ok = decodeData(bufferIn, otherId);
     if(ok)
@@ -164,11 +179,12 @@ bool handshake()
     else
     {
         Serial << "ID NOT OK = " << bufferIn << nl;
+        otherId[0] = 0; // reset
         return false;
     }
 
     // ack
-    bool ack, goFirst = GoFirst();
+    bool ack, goFirst = GoFirst(otherId);
     Serial << "[HS] detected " << otherId << " goFirst == " << goFirst << nl;
 
 
