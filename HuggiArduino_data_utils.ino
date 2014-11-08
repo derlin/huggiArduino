@@ -20,7 +20,7 @@ void encodeData(char * dest, const char * src)
     int length = strlen(src);
     int checksum = computeChecksum(src);
 
-    sprintf(dest, "%c%s%04X", 
+    sprintf(dest, DATA_FORMAT, 
         length, src, checksum);
 
     Serial << " --> new data is " << dest << nl;
