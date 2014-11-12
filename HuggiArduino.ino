@@ -11,10 +11,6 @@
 #include "HuggiArduino.h"
 #include "HuggiBuffer.h"
 
-#define HUGGI_PRESSURE_SENSOR_DEBUG
-#include "HuggiPressureSensor.h"
-
-
 
 #define GoFirst(otherId)   strcmp(ID, otherId) < 0
 
@@ -64,35 +60,39 @@ void setup()
 void loop() 
 {
 
-  if(currentHug != NULL && 
+    // detect hug
+    if(currentHug != NULL && 
         sensor.isPressed() && handshake(currentHug->id))
-  {
-    Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
-
-    long start = millis();
-    if(exchange(currentHug->data))
     {
-        currentHug->duration = millis() - start;
-        Serial << "DATA = " << currentHug->data << nl;
-        Serial << " HUG DURATION =~ " << currentHug->duration << nl;
+        Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
 
-        huggiBuff.commit();
-        currentHug = huggiBuff.getAvail();
+        long start = millis();
+
+        if(exchange(currentHug->data))
+        {
+            currentHug->duration = millis() - start;
+            Serial << "DATA = " << currentHug->data << nl;
+            Serial << " HUG DURATION =~ " << currentHug->duration << nl;
+
+            huggiBuff.commit();
+            currentHug = huggiBuff.getAvail();
+            delay(300);
+        }
+
     }
 
-  }
-
-  if(Serial.available())
-  {
-    char c = Serial.read();
-    if(c == nl)
+    // bluetooth
+    if(Serial.available())
     {
-        while(!huggiBuff.isEmpty())
+        char c = Serial.read();
+        if(c == nl)
         {
-            toString(Serial, *huggiBuff.getNext());
+            while(!huggiBuff.isEmpty())
+            {
+                toString(Serial, *huggiBuff.getNext());
+            }
         }
     }
-  }
 
 }
 
@@ -115,6 +115,7 @@ bool exchange(char* data)
         // send
         if(dataOut[indexOut] == 0)
         {
+            // end of data, start again from the beginning
             altSerial << nl;
             indexOut = 0;
         }
@@ -129,7 +130,7 @@ bool exchange(char* data)
             char c = altSerial.read();
             lastReceived = millis();
 
-            if(!dataReceived)
+            if(!dataReceived) 
             {
                 bufferIn[indexIn++] = c;
                 if(c == nl)

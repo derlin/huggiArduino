@@ -1,3 +1,10 @@
+#ifndef HUGGIARDUINO_H
+#define HUGGIARDUINO_H
+
+
+#define HUGGI_PRESSURE_SENSOR_DEBUG
+#include "HuggiPressureSensor.h"
+
 #define nl '\n' // newline
 
 
@@ -15,11 +22,7 @@
 
 #define Syn         "H"
 #define Ack         "OK"
-#define Fin         "BYE"
 
-#define Nak         "OOPS"
-
-#define Keep_Alive  "LALA"
 
 #define SYN_RL_TIMEOUT           400 // readline timeout
 #define ACK_RL_TIMEOUT           200 // readline timeout
@@ -38,3 +41,5 @@
 #define DATA_FORMAT         "%c%s%04X" // 1:length, data, 4: hex checksum
 
 // --------------------------
+
+#endif
