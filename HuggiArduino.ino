@@ -33,7 +33,7 @@ int inputs[] = {A0, A5};
 HuggiPressureSensor sensor(inputs, INPUT_NBR);
 
 
-#define ID      "1-"
+#define ID      "2-"
 #define myName  "Lucy Linder"
 
 HuggiBuffer huggiBuff;
@@ -43,7 +43,7 @@ Hug_t * currentHug;
 
 void setup() 
 {  
-  Serial.begin(9600);//BT_BAUDRATE);
+  Serial.begin(BT_BAUDRATE);
   altSerial.begin(TS_BAUDRATE);
 
   Serial << "Hugginess :)" << nl;

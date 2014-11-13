@@ -10,7 +10,7 @@
 
 // --------------------------
 
-#define BT_BAUDRATE    9600 // serial baudrate
+#define BT_BAUDRATE    115200 //9600 // serial baudrate
 #define TS_BAUDRATE    14400 // altserial baudrate
 
 
