@@ -18,7 +18,7 @@ bool HuggiBuffer::isFull()
 
 Hug_t* HuggiBuffer::getAvail()
 {
-    Hug_t* hug;
+    Hug_t* hug = NULL;
 
     if(!isFull())
     {
