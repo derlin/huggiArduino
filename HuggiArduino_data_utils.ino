@@ -43,7 +43,7 @@ bool decodeData(const char * encoded, char * decoded)
     sscanf(encoded, "%X", &givenChk); // get the checksum
     int computedChk = computeChecksum(decoded); // compute the checksum
 
-    Serial << "data: " << decoded << " CHK: " << givenChk << " | " << computedChk << nl;
+    Serial << "data: " << decoded << " CHK: " << givenChk << " | " << computedChk << ", L is " << length << nl;
 
     return givenChk == computedChk; // compare checksums  
 }

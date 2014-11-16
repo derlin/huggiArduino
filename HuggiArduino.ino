@@ -6,14 +6,14 @@
 #include <AltSoftSerial.h>
 #include <string.h>
 #include "EEPROM.h"
-
+#include "Adafruit_NeoPixel.h"
 
 #include "HuggiArduino.h"
 #include "HuggiBuffer.h"
 
-
 #define GoFirst(otherId)   strcmp(ID, otherId) < 0
 
+extern Adafruit_NeoPixel strip;
 
 AltSoftSerial altSerial; //On Arduino Uno TX = pin 9 | RX = pin 8
 
@@ -27,14 +27,9 @@ char bufferIn[DATA_BUFF_SIZE] = {0};
 char dataOut[DATA_BUFF_SIZE]  = {0};
 
 
-#define INPUT_NBR   2
 // #define SENSITIVITY 
 int inputs[] = {A0, A5}; 
 HuggiPressureSensor sensor(inputs, INPUT_NBR);
-
-
-#define ID      "2-"
-#define myName  "Lucy Linder"
 
 HuggiBuffer huggiBuff;
 Hug_t * currentHug;
@@ -52,7 +47,12 @@ void setup()
   encodeData(myId, ID);
 
   currentHug = huggiBuff.getAvail();
+
+  // pressure sensor
   sensor.calibrate();
+
+  // leds
+  ledSetup();
 }
 
 // ------------
@@ -66,11 +66,13 @@ void loop()
     {
         Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
 
+        ledSetColor(ORANGE);
         long start = millis();
 
         if(exchange(currentHug->data))
         {
             currentHug->duration = millis() - start;
+            ledBlink(GREEN, 3);
             Serial << "DATA = " << currentHug->data << nl;
             Serial << " HUG DURATION =~ " << currentHug->duration << nl;
 
@@ -80,6 +82,8 @@ void loop()
         }
 
     }
+
+    ledSetColor(0);
 
     // bluetooth
     if(Serial.available())
@@ -139,7 +143,10 @@ bool exchange(char* data)
                     indexIn = 0;
 
                     if(dataReceived = decodeData(bufferIn, data))
+                    {
                         Serial << "    [1] rcvd " << bufferIn << nl;
+                        ledSetColor(GREEN);
+                    }
                 }
             }
         }
@@ -155,6 +162,8 @@ bool exchange(char* data)
 
 bool handshake(char * otherId)
 {
+
+    ledSetColor(YELLOW);
     bufferIn[0] = 0; // reset
 
     //Serial << "in handshake" << nl;
@@ -165,12 +174,13 @@ bool handshake(char * otherId)
 
     if(!syn) return false;
 
+
     if(strcmp(myId, bufferIn) == 0)
     {
         Serial << "LOOPBACK DETECTED -- check that the other device is ON" << nl;
+        ledBlink(ORANGE, 3);
         return false;
     }
-
     // check that id is not truncated
     bool ok = decodeData(bufferIn, otherId);
     if(ok)
@@ -181,6 +191,7 @@ bool handshake(char * otherId)
     {
         Serial << "ID NOT OK = " << bufferIn << nl;
         otherId[0] = 0; // reset
+        ledSetColor(0);
         return false;
     }
 
@@ -205,5 +216,4 @@ bool handshake(char * otherId)
 
 
 // -----------------
-
 
