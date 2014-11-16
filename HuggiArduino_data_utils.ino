@@ -34,11 +34,13 @@ bool decodeData(const char * encoded, char * decoded)
     int length = *(encoded++); // get length of payload
     // Serial << "LEN " << length << nl;
     
-    for(int i = 0; i < length; i++){
+    int i = 0;
+    for(; i < length; i++){
         if(*encoded == 0) return false; // OOPS, length not correct !
         decoded[i] = *(encoded++); // extract payload
     }
-
+    decoded[i] = 0;
+    
     int givenChk;
     sscanf(encoded, "%X", &givenChk); // get the checksum
     int computedChk = computeChecksum(decoded); // compute the checksum
