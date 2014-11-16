@@ -60,9 +60,13 @@ void setup()
 void loop() 
 {
 
-    // detect hug
-    if(currentHug != NULL && 
-        sensor.isPressed() && handshake(currentHug->id))
+    if(currentHug == NULL)
+    {
+        Serial << "BUFFER FULL !\n";
+        ledBlink(RED, 4);
+        delay(2000); 
+    }
+    else if(sensor.isPressed() && handshake(currentHug->id))
     {
         Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
 
@@ -95,6 +99,7 @@ void loop()
             {
                 toString(Serial, *huggiBuff.getNext());
             }
+            currentHug = huggiBuff.getAvail();
         }
     }
 
@@ -111,7 +116,7 @@ bool exchange(char* data)
     int indexOut = 0;
 
 
-    Serial << "== Begin HUG..." << nl;
+    Serial << "== Begin HUG..." << dataOut << nl;
 
 
     while(sensor.isPressed() && (millis() - lastReceived) < 600)
@@ -142,7 +147,7 @@ bool exchange(char* data)
                     bufferIn[indexIn] = 0;
                     indexIn = 0;
 
-                    if(dataReceived = decodeData(bufferIn, data))
+                    if((dataReceived = decodeData(bufferIn, data)))
                     {
                         Serial << "    [1] rcvd " << bufferIn << nl;
                         ledSetColor(GREEN);
@@ -185,7 +190,7 @@ bool handshake(char * otherId)
     bool ok = decodeData(bufferIn, otherId);
     if(ok)
     {
-        Serial << "ID = " << otherId << nl;
+        Serial << "ID = " << otherId << " | my id = | " << myId << nl;
     }
     else
     {
