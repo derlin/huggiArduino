@@ -27,12 +27,16 @@ void ledSetColor(uint32_t color)
 void ledBlink(uint32_t color, byte times)
 {
     uint32_t cur_color = strip.getPixelColor(0);
+
     while(times-- > 0)
     {
         ledSetColor(color);
         delay(300);
         ledSetColor(0);
         delay(200);
+
     }
+    
+
     ledSetColor(cur_color);
 }
