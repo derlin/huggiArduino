@@ -10,11 +10,11 @@
 
 // --------------------------
 
-#define BT_BAUDRATE    115200 //9600 // serial baudrate
+#define BT_BAUDRATE    38400 // serial baudrate
 #define TS_BAUDRATE    14400 // altserial baudrate
 
 
-#define ID      "1"
+#define ID      "1-"
 #define myName  "Lucy Linder"
 
 // --------------------------
@@ -52,5 +52,8 @@
 #define BLUE    0x0000FF 
 #define ORANGE  0xCC6600 
 #define YELLOW  0xFFFF00
+
+// -------------------------
+#define BT_DATA     "@"
 
 #endif

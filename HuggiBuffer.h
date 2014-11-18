@@ -36,6 +36,16 @@ public:
      */
      Hug_t* getNext();
 
+     /**
+      * remove the last hug returned by getNext()
+      */
+     void remove();
+
+     /**
+      * get the number of hugs currently in the buffer
+      */
+     byte getSize();
+
 private:
     Hug_t hugs[MAX_STORED_HUGS + 1];
     int top;

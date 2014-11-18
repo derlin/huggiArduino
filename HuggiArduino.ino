@@ -62,13 +62,13 @@ void loop()
 
     if(currentHug == NULL)
     {
-        Serial << "BUFFER FULL !\n";
+        Serial << "BUFF FULL !\n";
         ledBlink(RED, 4);
         delay(2000); 
     }
     else if(sensor.isPressed() && handshake(currentHug->id))
     {
-        Serial << "HANDSHAKE OK WITH " << currentHug->id << " !!" << nl;
+        Serial << "HS OK WITH " << currentHug->id  << nl;
 
         ledSetColor(ORANGE);
         long start = millis();
@@ -78,7 +78,7 @@ void loop()
             currentHug->duration = millis() - start;
             ledBlink(GREEN, 3);
             Serial << "DATA = " << currentHug->data << nl;
-            Serial << " HUG DURATION =~ " << currentHug->duration << nl;
+            Serial << " DURATION =~ " << currentHug->duration << nl;
 
             huggiBuff.commit();
             currentHug = huggiBuff.getAvail();
@@ -93,13 +93,16 @@ void loop()
     if(Serial.available())
     {
         char c = Serial.read();
+        Serial << "[got] " << c << nl;
         if(c == nl)
         {
-            while(!huggiBuff.isEmpty())
-            {
-                toString(Serial, *huggiBuff.getNext());
-            }
-            currentHug = huggiBuff.getAvail();
+            Serial << "bt " << huggiBuff.getSize() << "\n";
+            // while(!huggiBuff.isEmpty())
+            // {
+            //     toString(Serial, *huggiBuff.getNext());
+            // }
+            // currentHug = huggiBuff.getAvail();
+            sendHugs();
         }
     }
 
@@ -149,7 +152,7 @@ bool exchange(char* data)
 
                     if((dataReceived = decodeData(bufferIn, data)))
                     {
-                        Serial << "    [1] rcvd " << bufferIn << nl;
+                        Serial << " [1] rcvd " << bufferIn << nl;
                         ledSetColor(GREEN);
                     }
                 }
@@ -182,7 +185,7 @@ bool handshake(char * otherId)
 
     if(strcmp(myId, bufferIn) == 0)
     {
-        Serial << "LOOPBACK DETECTED -- check that the other device is ON" << nl;
+        Serial << "LOOPBACK DETECTED" << nl;
         ledBlink(ORANGE, 3);
         return false;
     }
@@ -202,7 +205,7 @@ bool handshake(char * otherId)
 
     // ack
     bool ack, goFirst = GoFirst(otherId);
-    Serial << "[HS] detected " << otherId << " goFirst == " << goFirst << nl;
+    Serial << "[HS] " << otherId << " first == " << goFirst << nl;
 
 
     if(goFirst)
