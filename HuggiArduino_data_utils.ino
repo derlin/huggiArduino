@@ -27,7 +27,8 @@ void encodeData(char * dest, const char * src)
 
 }
 
-bool decodeData(const char * encoded, char * decoded)
+// return: the length of the decoded data, 0 if none/error
+byte decodeData(const char * encoded, char * decoded)
 {
     *decoded = 0; // reset
 
@@ -36,7 +37,7 @@ bool decodeData(const char * encoded, char * decoded)
     
     int i = 0;
     for(; i < length; i++){
-        if(*encoded == 0) return false; // OOPS, length not correct !
+        if(*encoded == 0) return 0; // OOPS, length not correct !
         decoded[i] = *(encoded++); // extract payload
     }
     decoded[i] = 0;
@@ -47,5 +48,5 @@ bool decodeData(const char * encoded, char * decoded)
 
     Serial << "data: " << decoded << " CHK: " << givenChk << " | " << computedChk << ", L is " << length << nl;
 
-    return givenChk == computedChk; // compare checksums  
+    return givenChk == computedChk ? length : 0; // compare checksums  
 }

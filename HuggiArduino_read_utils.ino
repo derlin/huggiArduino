@@ -1,4 +1,4 @@
-
+/*
 bool readExpected(Stream& serial, const char * expected, long timeout)
 {
     // Serial << "   in readexp " << expected << nl;
@@ -60,3 +60,4 @@ bool readLine(Stream& serial, char * dest, int dest_size, long timeout)
     }
     return ret;
 }
+*/

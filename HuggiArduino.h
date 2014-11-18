@@ -14,7 +14,7 @@
 #define TS_BAUDRATE    14400 // altserial baudrate
 
 
-#define ID      "1-"
+#define ID      "2-"
 #define myName  "Lucy Linder"
 
 // --------------------------
@@ -30,12 +30,11 @@
 // --------------------------
 
 #define DATA_MAX_SIZE       70      // max size of the data (name)
-#define ID_MAX_SIZE         5
+#define ID_SIZE             2
 
 #define LENGTH_SIZE         1
 #define CHK_SIZE            4 // checksum is 4 hex characters
 
-#define ID_BUFF_SIZE        LENGTH_SIZE+ID_MAX_SIZE+CHK_SIZE+1   // 1:length, id,  end char
 #define DATA_BUFF_SIZE      LENGTH_SIZE+DATA_MAX_SIZE+CHK_SIZE+1 // 1:length, data, 4:checksum, 1:newline
 
 #define DATA_FORMAT         "%c%s%04X" // 1:length, data, 4: hex checksum

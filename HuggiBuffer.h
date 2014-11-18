@@ -8,7 +8,7 @@
 
 typedef struct Hug
 {
-    char id[ID_MAX_SIZE+1];
+    char id[ID_SIZE+1];
     char data[DATA_MAX_SIZE+1];
     long duration;
 } Hug_t;

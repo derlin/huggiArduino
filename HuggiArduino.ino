@@ -18,7 +18,7 @@ extern Adafruit_NeoPixel strip;
 AltSoftSerial altSerial; //On Arduino Uno TX = pin 9 | RX = pin 8
 
 // buffer for the raw other arduino's id
-char myId[ID_BUFF_SIZE]       = {0};  
+char myId[ID_SIZE+1]       = {0};  
 
 // raw incoming data
 char bufferIn[DATA_BUFF_SIZE] = {0};
@@ -43,9 +43,10 @@ void setup()
 
   Serial << "Hugginess :)" << nl;
   // data default
-  encodeData(dataOut, myName);
-  encodeData(myId, ID);
 
+  
+
+  prepareDataOut(ID, myName);
   currentHug = huggiBuff.getAvail();
 
   // pressure sensor
@@ -55,6 +56,13 @@ void setup()
   ledSetup();
 }
 
+
+void prepareDataOut(char * myId, char * myData)
+{
+    char temp[ID_SIZE+DATA_BUFF_SIZE];
+    sprintf(temp, "%s%s", myId, myData);
+    encodeData(dataOut, temp); 
+}
 // ------------
 
 void loop() 
@@ -66,16 +74,12 @@ void loop()
         ledBlink(RED, 4);
         delay(2000); 
     }
-    else if(sensor.isPressed() && handshake(currentHug->id))
+    else if(sensor.isPressed())
     {
-        Serial << "HS OK WITH " << currentHug->id  << nl;
-
         ledSetColor(ORANGE);
-        long start = millis();
 
-        if(exchange(currentHug->data))
+        if(exchange(currentHug))
         {
-            currentHug->duration = millis() - start;
             ledBlink(GREEN, 3);
             Serial << "DATA = " << currentHug->data << nl;
             Serial << " DURATION =~ " << currentHug->duration << nl;
@@ -84,7 +88,6 @@ void loop()
             currentHug = huggiBuff.getAvail();
             delay(300);
         }
-
     }
 
     ledSetColor(0);
@@ -102,29 +105,42 @@ void loop()
             //     toString(Serial, *huggiBuff.getNext());
             // }
             // currentHug = huggiBuff.getAvail();
-            sendHugs();
+            //sendHugs();
         }
     }
 
 }
 
+#define DATA_NOK 'H'
+#define DATA_OK  'O'
+
 // --------------
-bool exchange(char* data)
+
+bool exchange(Hug_t * hug)
 {
-    long lastReceived = millis();
+    int start = -1;
 
+    int lastReceived = millis();
     bool dataReceived = false;
+    bool otherHasReceivedData = false;
 
-    int indexIn = 0;
+    int indexIn = -1;
     int indexOut = 0;
 
 
-    Serial << "== Begin HUG..." << dataOut << nl;
+    Serial << "== Begin HUG..." << nl;
 
 
-    while(sensor.isPressed() && (millis() - lastReceived) < 600)
+    while(sensor.isPressed())
     {
-        // send
+        int ms = millis() - lastReceived;
+        if(ms > 500)
+        {
+            Serial << "TIMEOUT " << ms << nl;
+            break;
+        }
+
+        // ------------------------------ send
         if(dataOut[indexOut] == 0)
         {
             // end of data, start again from the beginning
@@ -133,95 +149,85 @@ bool exchange(char* data)
         }
         else
         {
+            if(indexOut == 0) // first char: add a (n)ack
+                altSerial << (dataReceived ? DATA_OK : DATA_NOK);
+
             altSerial << dataOut[indexOut++];
         }
 
-        // receive
+
+        // ----------------------------- receive
+
         if(altSerial.available() )
         {
+
+            if(start < 0) // first char received ever, start measuring
+                start = millis();
+
+            // get the next char
             char c = altSerial.read();
             lastReceived = millis();
 
-            if(!dataReceived) 
+
+            if(indexIn < 0) // first char: get the ack
+            {
+                otherHasReceivedData = (c == DATA_OK);
+                indexIn = 0;
+            }
+            else if(dataReceived && c == nl) // data already ok
+            {
+                // just note that we got and end
+                // so we capture the ack on the next char
+                indexIn = -1;
+            }
+            else // data not received
             {
                 bufferIn[indexIn++] = c;
-                if(c == nl)
+                
+                if(c == nl) // end of data -> process it
                 {
-                    bufferIn[indexIn] = 0;
-                    indexIn = 0;
+                    bufferIn[indexIn] = 0; 
+                    indexIn = -1;
 
-                    if((dataReceived = decodeData(bufferIn, data)))
-                    {
-                        Serial << " [1] rcvd " << bufferIn << nl;
+                    byte dataLen = decodeData(bufferIn, hug->data);
+                    if(dataLen > 0) // decode ok
+                    {                        
+                        // get the id
+                        memcpy(hug->id, hug->data, ID_SIZE);
+                        hug->id[ID_SIZE] = 0;
+
+                        if(strcmp(hug->id, ID) == 0) // detect loopbacks
+                        {
+                            Serial << "LOOP BACK detected !\n";
+                            ledBlink(RED, 3);
+                            return false; 
+                        }
+
+                        // get the data, i.e. remove the id from the data
+                        memmove(hug->data, hug->data + ID_SIZE, dataLen - ID_SIZE + 1);
+
+                        // debug
+                        Serial << "  rcvd " << hug->data << " from " << hug->id << nl;
+
+                        // feedback
                         ledSetColor(GREEN);
+                        dataReceived = true;
                     }
                 }
             }
-        }
-    }
 
-    Serial << "== End of HUG..." << nl;
+        } // end reveive
 
-    return dataReceived;
-}
+    } // end while
 
 
-// -----------------
+    Serial << "== End of HUG... other ok ? " << (otherHasReceivedData ? "TRUE" : "FALSE") << nl;
 
-bool handshake(char * otherId)
-{
-
-    ledSetColor(YELLOW);
-    bufferIn[0] = 0; // reset
-
-    //Serial << "in handshake" << nl;
-    altSerial << Syn << myId << nl;
-
-    // the sending of "H<id>" should be very frequent for the handshake to work
-    bool syn = altSerial.available() && altSerial.read() == 'H' && readLine(altSerial, bufferIn, ID_BUFF_SIZE, SYN_RL_TIMEOUT);
-
-    if(!syn) return false;
-
-
-    if(strcmp(myId, bufferIn) == 0)
+    if(dataReceived && otherHasReceivedData) // only if ok for both ? TODO
     {
-        Serial << "LOOPBACK DETECTED" << nl;
-        ledBlink(ORANGE, 3);
-        return false;
-    }
-    // check that id is not truncated
-    bool ok = decodeData(bufferIn, otherId);
-    if(ok)
-    {
-        Serial << "ID = " << otherId << " | my id = | " << myId << nl;
-    }
-    else
-    {
-        Serial << "ID NOT OK = " << bufferIn << nl;
-        otherId[0] = 0; // reset
-        ledSetColor(0);
-        return false;
+        hug->duration = millis() - start;
+        return true;
     }
 
-    // ack
-    bool ack, goFirst = GoFirst(otherId);
-    Serial << "[HS] " << otherId << " first == " << goFirst << nl;
-
-
-    if(goFirst)
-    {
-        altSerial << Ack;
-        ack = readExpected(altSerial, Ack, ACK_RL_TIMEOUT);
-    }
-    else
-    {
-        ack = readExpected(altSerial, Ack, ACK_RL_TIMEOUT);
-        if(ack) altSerial << Ack;
-    }
-
-    return ack;
-}
-
-
-// -----------------
-
+    return false;
+} // end exchange
