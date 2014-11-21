@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <Streaming.h>
 #include <AltSoftSerial.h>
-#include <string.h>
+
 #include "EEPROM.h"
 #include "Adafruit_NeoPixel.h"
 
@@ -16,9 +16,6 @@
 extern Adafruit_NeoPixel strip;
 
 AltSoftSerial altSerial; //On Arduino Uno TX = pin 9 | RX = pin 8
-
-// buffer for the raw other arduino's id
-char myId[ID_SIZE+1]       = {0};  
 
 // raw incoming data
 char bufferIn[DATA_BUFF_SIZE] = {0};
@@ -42,10 +39,8 @@ void setup()
   altSerial.begin(TS_BAUDRATE);
 
   Serial << "Hugginess :)" << nl;
+
   // data default
-
-  
-
   prepareDataOut(ID, myName);
   currentHug = huggiBuff.getAvail();
 
@@ -59,7 +54,7 @@ void setup()
 
 void prepareDataOut(char * myId, char * myData)
 {
-    char temp[ID_SIZE+DATA_BUFF_SIZE];
+    char temp[strlen(myId)+strlen(myData)+1];
     sprintf(temp, "%s%s", myId, myData);
     encodeData(dataOut, temp); 
 }
@@ -70,7 +65,7 @@ void loop()
 
     if(currentHug == NULL)
     {
-        Serial << "BUFF FULL !\n";
+        Serial << "BUFF FULL!\n";
         ledBlink(RED, 4);
         delay(2000); 
     }
@@ -189,11 +184,11 @@ bool exchange(Hug_t * hug)
                     bufferIn[indexIn] = 0; 
                     indexIn = -1;
 
-                    byte dataLen = decodeData(bufferIn, hug->data);
+                    byte dataLen = decodeData(bufferIn, hug->id);
                     if(dataLen > 0) // decode ok
                     {                        
-                        // get the id
-                        memcpy(hug->id, hug->data, ID_SIZE);
+                        // split id and data, shift by one to add an "end of string"
+                        memmove(hug->data, hug->data -1, dataLen - ID_SIZE + 1);
                         hug->id[ID_SIZE] = 0;
 
                         if(strcmp(hug->id, ID) == 0) // detect loopbacks
@@ -203,8 +198,6 @@ bool exchange(Hug_t * hug)
                             return false; 
                         }
 
-                        // get the data, i.e. remove the id from the data
-                        memmove(hug->data, hug->data + ID_SIZE, dataLen - ID_SIZE + 1);
 
                         // debug
                         Serial << "  rcvd " << hug->data << " from " << hug->id << nl;
@@ -221,7 +214,7 @@ bool exchange(Hug_t * hug)
     } // end while
 
 
-    Serial << "== End of HUG... other ok ? " << (otherHasReceivedData ? "TRUE" : "FALSE") << nl;
+    Serial << "== End of HUG..." << nl;
 
     if(dataReceived && otherHasReceivedData) // only if ok for both ? TODO
     {
