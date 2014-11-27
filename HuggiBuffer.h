@@ -62,4 +62,7 @@ void toString(std::ostream&, Hug_t&);
 void toString(Stream&, Hug_t&);
 #endif
 
+
+extern volatile bool triggered;
+
 #endif

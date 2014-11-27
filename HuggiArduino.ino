@@ -25,7 +25,7 @@ char dataOut[DATA_BUFF_SIZE]  = {0};
 
 
 // #define SENSITIVITY 
-int inputs[] = {A0, A5}; 
+int inputs[] = {A0, A2}; 
 HuggiPressureSensor sensor(inputs, INPUT_NBR);
 
 HuggiBuffer huggiBuff;
@@ -41,33 +41,56 @@ void setup()
   Serial << "Hugginess :)" << nl;
 
   // data default
-  prepareDataOut(ID, myName);
+  // prepareDataOut(ID, myName);
   currentHug = huggiBuff.getAvail();
 
   // pressure sensor
   sensor.calibrate();
 
+
   // leds
   ledSetup();
 }
 
-
-void prepareDataOut(char * myId, char * myData)
+bool setDataOut()
 {
-    char temp[strlen(myId)+strlen(myData)+1];
-    sprintf(temp, "%s%s", myId, myData);
-    encodeData(dataOut, temp); 
+    dataOut[0] = 0; // reset
+
+    char * buff = bufferIn;
+    byte len = readFromEEprom(EEPROM_ID_ADDR, buff, DATA_BUFF_SIZE);
+    if(len == 0){
+        Serial << "id not set" << nl;
+        ledBlink(PURPLE, 3);
+        return false;
+    }
+
+    buff += len; 
+    len = readFromEEprom(EEPROM_DATA_ADDR, buff, DATA_BUFF_SIZE);
+    if(len == 0){
+        Serial << "name not set" << nl;
+        ledBlink(PINK, 3);
+        return false;
+    }  
+
+    encodeData(dataOut, bufferIn); 
 }
+
 // ------------
 
 void loop() 
 {
-
     if(currentHug == NULL)
     {
         Serial << "BUFF FULL!\n";
         ledBlink(RED, 4);
         delay(2000); 
+    }
+    else if(dataOut[0] == 0)
+    {
+        setDataOut();
+        ledBlink(PINK, 3);
+        delay(400);
+        ; // do nothing, since id | name not configured
     }
     else if(sensor.isPressed())
     {
@@ -84,24 +107,16 @@ void loop()
             delay(300);
         }
     }
+    delay(100);
 
     ledSetColor(0);
 
     // bluetooth
     if(Serial.available())
     {
-        char c = Serial.read();
-        Serial << "[got] " << c << nl;
-        if(c == nl)
-        {
-            Serial << "bt " << huggiBuff.getSize() << "\n";
-            // while(!huggiBuff.isEmpty())
-            // {
-            //     toString(Serial, *huggiBuff.getNext());
-            // }
-            // currentHug = huggiBuff.getAvail();
-            //sendHugs();
-        }
+        Serial << "== bt" << nl;
+        bt();
+        Serial << "!= bt" << nl;
     }
 
 }

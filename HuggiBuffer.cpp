@@ -67,7 +67,8 @@ Hug_t* HuggiBuffer::getNext()
 
 void HuggiBuffer::remove()
 {
-   bottom = AddModulo(bottom, 1);
+    if(!isEmpty())
+        bottom = AddModulo(bottom, 1);
 }
 // --------
 

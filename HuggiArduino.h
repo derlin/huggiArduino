@@ -52,7 +52,16 @@
 #define ORANGE  0xCC6600 
 #define YELLOW  0xFFFF00
 
-// -------------------------
-#define BT_DATA     "@"
+#define PURPLE  0x400561
+#define PINK    0x961B7B
 
+// -------------------------
+
+
+
+// -------------------------
+
+#define EEPROM_ID_ADDR      0
+#define EEPROM_DATA_ADDR    100 
+#define EEPROM_MAX_ADDRESS  300
 #endif
