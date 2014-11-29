@@ -29,8 +29,8 @@
 
 // --------------------------
 
-#define DATA_MAX_SIZE       70      // max size of the data (name)
-#define ID_SIZE             2
+#define DATA_MAX_SIZE       50      // max size of the data (name)
+#define ID_SIZE             10
 
 #define LENGTH_SIZE         1
 #define CHK_SIZE            4 // checksum is 4 hex characters

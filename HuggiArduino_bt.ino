@@ -29,6 +29,7 @@ boolean setId()
     {
         Serial << "set id" << nl;
         writeToEEprom(EEPROM_ID_ADDR, bufferIn, length);
+        setDataOut(); // update
         return true;
     }
     else
@@ -50,6 +51,7 @@ boolean setData()
     {
     Serial << "set data" << nl;
         writeToEEprom(EEPROM_DATA_ADDR, bufferIn, length);
+        setDataOut(); // update
         return true;
     }
 
