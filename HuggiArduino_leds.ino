@@ -1,5 +1,5 @@
 
-#define LED_STRIP_PIN 6
+#define LED_STRIP_PIN 3
 #define NB_LEDS 3
 #define LEDS_DEFAULT_BRIGHTNESS 50
 

@@ -15,8 +15,8 @@ void writeToEEprom(byte address, char * data, int length)
     for(; i < length; i++) // write data 
     {
         EEPROM.write(address + 2 + i, data[i]);
-        Serial << "written: " << data[i] << " at " <<
-            address + 2 + i << nl;
+        // Serial << "written: " << data[i] << " at " <<
+        //     address + 2 + i << nl;
 
     }
     EEPROM.write(address + 2 + i, 0); i++; // end of string
@@ -24,7 +24,7 @@ void writeToEEprom(byte address, char * data, int length)
     // write magic
     EEPROM.write(address, EEPROM_MAGIC);
     EEPROM.write(address + 1, EEPROM_MAGIC);
-    Serial << "[EP] written LL at " << address << nl;
+    // Serial << "[EP] written LL at " << address << nl;
 
     Serial << "done\n";
 }
@@ -39,7 +39,7 @@ byte readFromEEprom(byte address, char * data, int buff_size)
     if(EEPROM.read(address) != EEPROM_MAGIC || 
        EEPROM.read(address + 1) != EEPROM_MAGIC)
     {
-        Serial << "Not configured... So not reading!\n"; 
+        // Serial << "Not configured... So not reading!\n"; 
         return len;
     }
 

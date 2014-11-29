@@ -1,11 +1,24 @@
 #define BT_CMD_PREFIX      '$'
 #define BT_DATA_PREFIX     '@'
-#define BT_ACK             '#'
+#define BT_ACK_PREFIX      '#'
 #define BT_DATA_SEP        '!'
 #define BT_TIMEOUT          2400
 
+
+#define BT_CMD_ECHO         'E'
+#define BT_CMD_SET_ID       'I'
+#define BT_CMD_SET_DATA     'D'
+#define BT_CMD_SEND_HUGS    'H'
+#define BT_CMD_CALIBRATE    'C'
+#define BT_CMD_SLEEP        'S'
+
+#define BT_ACK_OK           '#'
+#define BT_ACK_NOK          '?'
+
 #include "HuggiArduino.h"
 
+//#define SendOk()  do{ Serial < BT_ACK_PREFIX << BT_ACK_OK << nl; } while(1)
+//#define SendNok() do{ Serial < BT_ACK_PREFIX << BT_ACK_NOK << nl; } while(1)
 
 boolean setId()
 {
@@ -22,6 +35,7 @@ boolean setId()
     {
         Serial << "Wrong id size: " << length << nl;
     }
+
 
     return false;
 }
@@ -56,7 +70,7 @@ boolean sendHug()
         if(!hug) return false; // no more hug
 
         // send hug
-        Serial << BT_DATA_PREFIX << 
+        Serial << BT_DATA_PREFIX << BT_CMD_SEND_HUGS << BT_DATA_SEP <<
             hug->id << BT_DATA_SEP <<
             hug->data << BT_DATA_SEP <<
             hug->duration << nl;
@@ -66,7 +80,7 @@ boolean sendHug()
         // wait ack
         while(millis() - lastSent < BT_TIMEOUT )
         {
-            if(Serial.available() && (Serial.read() == BT_ACK) )
+            if(Serial.available() && (Serial.read() == BT_ACK_PREFIX) )
             {
                 huggiBuff.remove();
                 ok = true;
@@ -90,62 +104,78 @@ boolean echo()
 }
 
 
-boolean bt()
+void bt()
 {
     if( Serial.read() != BT_CMD_PREFIX)
     {
         Serial << "CMD wrong magic" << nl;
-        readData(); // TODO: remove ? empty buffer until nl
-        return false;
     }
+    else
+    {
+        long lastReceived = millis();
+        bool sendAck = true;
+        char cmd;
+        bool ret;
 
-    long lastReceived = millis();
+        while(millis() - lastReceived < BT_TIMEOUT && 
+            !Serial.available());
 
-    while(millis() - lastReceived < BT_TIMEOUT && 
-        !Serial.available());
+        cmd = Serial.read();
 
-    switch (Serial.read()) {
-        case 'I':
-            Serial << 'I' << nl;
-            return setId();
+        switch (cmd) {
+            case BT_CMD_SET_ID:
+                Serial << 'I' << nl;
+                ret = setId();
+                break;
 
-        case 'D':
-            Serial << 'D' << nl;
-            return setData();
-        case 'C':
-            Serial << 'C' << nl;
-            sensor.calibrate();
-            Serial << "calibration done\n";
-            return true;
+            case BT_CMD_SET_DATA:
+                Serial << 'D' << nl;
+                ret = setData();
+                break;
 
-        case 'E':
-            Serial << 'E' << nl;
-            return echo();
+            case BT_CMD_CALIBRATE:
+                Serial << 'C' << nl;
+                sensor.calibrate();
+                Serial << "calibration done\n";
+                ret = true;
+                break;
 
-        case 'S':
-            while(Serial.available()) Serial.read();
-            enterSleep();
-            if(triggered)
-            {
-                Serial << "Triggered!" << nl;
-                triggered = false;
-            }
-            return true;
+            case BT_CMD_ECHO:
+                Serial << 'E' << nl;
+                ret = echo();
+                break;
 
-        case 'H':
-            Serial << 'H' << nl;
-            bool ok = true;
-            while(ok)
-            {
-                ok = sendHug();
-            }
-            return true;
-        
+            case BT_CMD_SLEEP:
+                while(Serial.available()) Serial.read();
+                enterSleep();
+                if(triggered) // pressure detected
+                {
+                    Serial << "Triggered!" << nl;
+                    triggered = false;
+                }
+                sendAck = false;
+                break;
+
+            case BT_CMD_SEND_HUGS:
+                Serial << 'H' << nl;
+                bool ok = true;
+                while(ok)
+                {
+                    ok = sendHug();
+                }
+                sendAck = false;
+                break;      
+        }
+
+        if(sendAck)
+        {
+            Serial << BT_ACK_PREFIX << cmd << (ret ? BT_ACK_OK : BT_ACK_NOK);
+            Serial << nl;
+        } 
+
     }
 
     readData(); // TODO: remove ? empty buffer until nl
-    return false;
-
 }
 
 

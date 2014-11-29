@@ -3,7 +3,7 @@
 
 #include "HuggiArduino.h"
 
-#define MAX_STORED_HUGS     10
+#define MAX_STORED_HUGS     5
 
 
 typedef struct Hug

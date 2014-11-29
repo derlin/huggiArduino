@@ -23,7 +23,6 @@ char bufferIn[DATA_BUFF_SIZE] = {0};
 // outgoing data: contains length, data and checksum
 char dataOut[DATA_BUFF_SIZE]  = {0};
 
-
 // #define SENSITIVITY 
 int inputs[] = {A0, A2}; 
 HuggiPressureSensor sensor(inputs, INPUT_NBR);
@@ -44,12 +43,31 @@ void setup()
   // prepareDataOut(ID, myName);
   currentHug = huggiBuff.getAvail();
 
+  // == DEBUG 
+  // for(int i = 0; i < 4; i++)
+  // {
+  //   sprintf(currentHug->id, "-%d", i);
+  //   sprintf(currentHug->data, "%d%s", i, "-data");
+  //   currentHug->duration = i * 10;
+  //   huggiBuff.commit();
+  //   currentHug = huggiBuff.getAvail();
+
+  // }
+
   // pressure sensor
   sensor.calibrate();
 
 
   // leds
   ledSetup();
+}
+
+// == DEBUG
+void prepareDataOut_debug(char * id, char * myData)
+{
+    char temp[strlen(id)+strlen(myData)+1];
+    sprintf(temp, "%s%s", id, myData);
+    encodeData(dataOut, temp); 
 }
 
 bool setDataOut()
@@ -65,6 +83,7 @@ bool setDataOut()
     }
 
     buff += len; 
+
     len = readFromEEprom(EEPROM_DATA_ADDR, buff, DATA_BUFF_SIZE);
     if(len == 0){
         Serial << "name not set" << nl;
@@ -95,12 +114,11 @@ void loop()
     else if(sensor.isPressed())
     {
         ledSetColor(ORANGE);
-
         if(exchange(currentHug))
         {
             ledBlink(GREEN, 3);
-            Serial << "DATA = " << currentHug->data << nl;
-            Serial << " DURATION =~ " << currentHug->duration << nl;
+            Serial << "DAT = " << currentHug->data << nl;
+            Serial << " DUR = " << currentHug->duration << nl;
 
             huggiBuff.commit();
             currentHug = huggiBuff.getAvail();
@@ -108,7 +126,6 @@ void loop()
         }
     }
     delay(100);
-
     ledSetColor(0);
 
     // bluetooth
@@ -196,7 +213,7 @@ bool exchange(Hug_t * hug)
                 
                 if(c == nl) // end of data -> process it
                 {
-                    bufferIn[indexIn] = 0; 
+                    bufferIn[--indexIn] = 0; // remove \n
                     indexIn = -1;
 
                     byte dataLen = decodeData(bufferIn, hug->id);
@@ -206,7 +223,7 @@ bool exchange(Hug_t * hug)
                         memmove(hug->data, hug->data -1, dataLen - ID_SIZE + 1);
                         hug->id[ID_SIZE] = 0;
 
-                        if(strcmp(hug->id, ID) == 0) // detect loopbacks
+                        if(strcmp(dataOut, bufferIn) == 0) // detect loopbacks
                         {
                             Serial << "LOOP BACK detected !\n";
                             ledBlink(RED, 3);
