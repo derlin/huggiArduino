@@ -11,6 +11,8 @@
 #define BT_CMD_SEND_HUGS    'H'
 #define BT_CMD_CALIBRATE    'C'
 #define BT_CMD_SLEEP        'S'
+#define BT_CMD_DUMP_ALL     'A'
+#define BT_CMD_RESET_EEPROM 'X'
 
 #define BT_ACK_OK           '#'
 #define BT_ACK_NOK          '?'
@@ -19,6 +21,21 @@
 
 //#define SendOk()  do{ Serial < BT_ACK_PREFIX << BT_ACK_OK << nl; } while(1)
 //#define SendNok() do{ Serial < BT_ACK_PREFIX << BT_ACK_NOK << nl; } while(1)
+
+boolean dump_all()
+{
+
+    Serial << BT_DATA_PREFIX << BT_CMD_DUMP_ALL << BT_DATA_SEP; 
+
+    readFromEEprom(EEPROM_ID_ADDR, bufferIn, DATA_BUFF_SIZE); // id
+    Serial << bufferIn << BT_DATA_SEP;
+    
+    readFromEEprom(EEPROM_DATA_ADDR, bufferIn, DATA_BUFF_SIZE); // data
+    Serial << bufferIn << nl;
+
+    return true;
+}
+
 
 boolean setId()
 {
@@ -29,7 +46,7 @@ boolean setId()
     {
         Serial << "set id" << nl;
         writeToEEprom(EEPROM_ID_ADDR, bufferIn, length);
-        setDataOut(); // update
+        setDataOut();
         return true;
     }
     else
@@ -59,7 +76,7 @@ boolean setData()
 }
 
 
-boolean sendHug()
+boolean sendHugs()
 {
     long lastSent;
     bool ok = true;
@@ -99,10 +116,10 @@ boolean echo()
     if(readData() > 0)
     {
         Serial << bufferIn << nl;
+        return true;
     }
 
-    return true;
-
+    return false;
 }
 
 
@@ -117,7 +134,7 @@ void bt()
         long lastReceived = millis();
         bool sendAck = true;
         char cmd;
-        bool ret;
+        bool ret = false;
 
         while(millis() - lastReceived < BT_TIMEOUT && 
             !Serial.available());
@@ -155,18 +172,37 @@ void bt()
                     Serial << "Triggered!" << nl;
                     triggered = false;
                 }
-                sendAck = false;
-                break;
+                Serial << "Woken up." << nl;               
+                return;
+                // sendAck = false;
+                // break;
 
-            case BT_CMD_SEND_HUGS:
+            case BT_CMD_DUMP_ALL:
+                Serial << 'A' << nl;
+                ret = dump_all();
+                break;  
+
+            case BT_CMD_RESET_EEPROM:
+                Serial << 'X' << nl;
+                resetEEprom();
+                dataOut[0] = 0;
+                ret = true;
+                break;    
+
+            case BT_CMD_SEND_HUGS: // always at the end (or compil error !?!)
                 Serial << 'H' << nl;
-                bool ok = true;
-                while(ok)
+                while(true)
                 {
-                    ok = sendHug();
+                    if( !sendHugs() ) 
+                        break;
                 }
                 sendAck = false;
-                break;      
+                break; 
+
+            default:
+                Serial << cmd << " undefined." << nl;
+                ret = false;
+                sendAck = false;
         }
 
         if(sendAck)
@@ -209,7 +245,7 @@ byte readData()
                 }
                 Serial << "DATA wrong magic: " << bufferIn << nl;
                 bufferIn[0] = 0; // reset
-                return false;
+                return 0;
             }
             else
             {
@@ -219,6 +255,6 @@ byte readData()
             lastReceived = millis();
         }
    } 
-   Serial << "DATA timeout " << millis() - lastReceived << nl;
+   //Serial << "DATA timeout " << millis() - lastReceived << nl;
    return 0;
 }
