@@ -3,7 +3,7 @@
 
 #include "HuggiArduino.h"
 
-#define MAX_STORED_HUGS     5
+#define MAX_STORED_HUGS     7
 
 
 typedef struct Hug
@@ -18,8 +18,7 @@ class HuggiBuffer {
 
 public:
     HuggiBuffer() : top(0), bottom(0){}
-    bool isEmpty();
-    bool isFull();
+
 
     /**
      * get a pointer to the next available struct
@@ -28,7 +27,7 @@ public:
     /**
      * commit the changes made to the next available struct
      */
-    void   commit();
+    void commit();
 
 
     /**
@@ -44,12 +43,23 @@ public:
      /**
       * get the number of hugs currently in the buffer
       */
-     byte getSize();
+     byte getSize() { return size; }
+
+     /**
+      * test if the buffer is empty
+      */
+    bool isEmpty() { return size == 0; }
+
+     /**
+      * test if the buffer is full
+      */
+    bool isFull()  { return size  == MAX_STORED_HUGS; }
 
 private:
     Hug_t hugs[MAX_STORED_HUGS + 1];
-    int top;
-    int bottom;
+    byte top;
+    byte bottom;
+    byte size;
 };
 
 

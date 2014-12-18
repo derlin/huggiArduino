@@ -4,30 +4,6 @@
 
 // --------
 
-bool HuggiBuffer::isEmpty()
-{
-    return top == bottom;
-}
-
-// --------
-
-bool HuggiBuffer::isFull()
-{
-    return AddModulo(top, 1) == bottom;
-}
-
-// --------
-
-byte HuggiBuffer::getSize()
-{
-    if(top >= bottom)
-    {
-        return top - bottom;
-    }
-
-    return top + MAX_STORED_HUGS - bottom;
-}
-
 Hug_t* HuggiBuffer::getAvail()
 {
     Hug_t* hug = NULL;
@@ -43,11 +19,11 @@ Hug_t* HuggiBuffer::getAvail()
 
 }
 
-// --------
 
 void HuggiBuffer::commit()
 {
     top = AddModulo(top, 1);
+    size++;
 }
 
 // --------
@@ -68,7 +44,10 @@ Hug_t* HuggiBuffer::getNext()
 void HuggiBuffer::remove()
 {
     if(!isEmpty())
+    {
         bottom = AddModulo(bottom, 1);
+        size--;
+    }
 }
 // --------
 
