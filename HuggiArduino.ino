@@ -37,23 +37,22 @@ void setup()
   Serial.begin(BT_BAUDRATE);
   altSerial.begin(TS_BAUDRATE);
 
-  Serial << "Hugginess :)" << nl;
+  Serial << DATA_DEFAULT << nl;
 
-  // data default
-  // prepareDataOut(ID, myName);
-  currentHug = huggiBuff.getAvail();
 
   // == DEBUG 
-  // for(int i = 0; i < 4; i++)
-  // {
-  //   sprintf(currentHug->id, "-%d", i);
-  //   sprintf(currentHug->data, "%d%s", i, "-data");
-  //   currentHug->duration = i * 10;
-  //   huggiBuff.commit();
-  //   currentHug = huggiBuff.getAvail();
+  /*
+  currentHug = huggiBuff.getAvail();
+  for(int i = 0; i < 2; i++)
+  {
+    sprintf(currentHug->id, "076444848%d", i+1);
+    sprintf(currentHug->data, "%d%s%d", i, "hello",i);
+    currentHug->duration = (i+1) * 1000;
+    huggiBuff.commit();
+    currentHug = huggiBuff.getAvail();
 
-  // }
-
+  }
+  //*/
   // pressure sensor
   sensor.calibrate();
 
@@ -86,30 +85,38 @@ bool setDataOut()
 
     len = readFromEEprom(EEPROM_DATA_ADDR, buff, DATA_BUFF_SIZE);
     if(len == 0){
-        Serial << "name not set" << nl;
+        // write default data
+        writeToEEprom(EEPROM_DATA_ADDR, DATA_DEFAULT, strlen(DATA_DEFAULT));
         ledBlink(PINK, 3);
-        return false;
+        Serial << "Data set to default" << nl;
     }  
 
     encodeData(dataOut, bufferIn); 
+
+    return true;
 }
 
 // ------------
 
 void loop() 
 {
+    currentHug = huggiBuff.getAvail();
+
     if(currentHug == NULL)
     {
-        Serial << "BUFF FULL!\n";
+        Serial << "BUFF FULL!" << huggiBuff.getSize() << nl;
         ledBlink(RED, 4);
         delay(2000); 
     }
     else if(dataOut[0] == 0)
     {
-        setDataOut();
-        ledBlink(PINK, 3);
-        delay(400);
-        ; // do nothing, since id | name not configured
+        if(!setDataOut())
+        {
+            ledBlink(PINK, 3); // error
+            Serial << "Sleeping." << nl;
+            enterSleep();
+            Serial << "Woken up." << nl;
+        }
     }
     else if(sensor.isPressed())
     {
@@ -117,16 +124,20 @@ void loop()
         if(exchange(currentHug))
         {
             ledBlink(GREEN, 3);
-            Serial << "DAT = " << currentHug->data << nl;
-            Serial << " DUR = " << currentHug->duration << nl;
 
             huggiBuff.commit();
             currentHug = huggiBuff.getAvail();
-            delay(300);
+            sendHugs();
+        }
+        else
+        {
+            delay(500);
         }
     }
-    delay(100);
+    
+    delay(1000);
     ledSetColor(0);
+
 
     // bluetooth
     if(Serial.available())
@@ -145,9 +156,9 @@ void loop()
 
 bool exchange(Hug_t * hug)
 {
-    int start = -1;
+    long start = -1;
 
-    int lastReceived = millis();
+    long lastReceived = millis();
     bool dataReceived = false;
     bool otherHasReceivedData = false;
 
@@ -160,7 +171,7 @@ bool exchange(Hug_t * hug)
 
     while(sensor.isPressed())
     {
-        int ms = millis() - lastReceived;
+        long ms = millis() - lastReceived;
         if(ms > 500)
         {
             Serial << "TIMEOUT " << ms << nl;
@@ -177,7 +188,9 @@ bool exchange(Hug_t * hug)
         else
         {
             if(indexOut == 0) // first char: add a (n)ack
+            {
                 altSerial << (dataReceived ? DATA_OK : DATA_NOK);
+            }
 
             altSerial << dataOut[indexOut++];
         }
@@ -193,19 +206,26 @@ bool exchange(Hug_t * hug)
 
             // get the next char
             char c = altSerial.read();
+            Serial << c;
             lastReceived = millis();
-
 
             if(indexIn < 0) // first char: get the ack
             {
                 otherHasReceivedData = (c == DATA_OK);
                 indexIn = 0;
             }
-            else if(dataReceived && c == nl) // data already ok
+            else if(dataReceived) // data already ok
             {
                 // just note that we got and end
                 // so we capture the ack on the next char
-                indexIn = -1;
+                if(c == nl) indexIn = -1;
+            }
+            else if(indexIn >= DATA_BUFF_SIZE - 1)
+            {
+                // buffer full, wait for the next data
+                Serial << "dataIn full" << nl;
+                if(c == nl) indexIn = -1;
+                continue; 
             }
             else // data not received
             {
@@ -246,13 +266,12 @@ bool exchange(Hug_t * hug)
     } // end while
 
 
-    Serial << "== End of HUG..." << nl;
+    Serial << "== End of HUG... other|me:" << otherHasReceivedData << "|" << dataReceived << nl;
 
     if(dataReceived && otherHasReceivedData) // only if ok for both ? TODO
     {
         hug->duration = millis() - start;
         return true;
     }
-
     return false;
 } // end exchange

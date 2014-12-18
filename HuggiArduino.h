@@ -10,12 +10,16 @@
 
 // --------------------------
 
-#define BT_BAUDRATE    38400 // serial baudrate
-#define TS_BAUDRATE    14400 // altserial baudrate
+#define BT_BAUDRATE    38400 //!< Bluetooth serial baudrate
+#define TS_BAUDRATE    19200 //!< Altserial baudrate, used between HuggiShirts
+// TODO: test 38400
 
-
+// debug only
 #define ID      "2-"
 #define myName  "Lucy Linder"
+// end debug only
+
+#define DATA_DEFAULT    "Hugginess :)" //!< Data written to eeprom if not explicitly configured 
 
 // --------------------------
 
@@ -24,8 +28,8 @@
 #define Ack         "OK"
 
 
-#define SYN_RL_TIMEOUT           400 // readline timeout
-#define ACK_RL_TIMEOUT           200 // readline timeout
+#define SYN_RL_TIMEOUT    400 // readline timeout
+#define ACK_RL_TIMEOUT    200 // readline timeout
 
 // --------------------------
 
@@ -64,4 +68,6 @@
 #define EEPROM_ID_ADDR      0
 #define EEPROM_DATA_ADDR    100 
 #define EEPROM_MAX_ADDRESS  300
+
+
 #endif
