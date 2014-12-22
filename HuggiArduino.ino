@@ -25,7 +25,7 @@ char dataOut[DATA_BUFF_SIZE]  = {0};
 
 // #define SENSITIVITY 
 int inputs[] = {A0, A2}; 
-HuggiPressureSensor sensor(inputs, INPUT_NBR);
+HuggiPressureSensor sensor(inputs, PRESSURE_INPUT_NBR);
 
 HuggiBuffer huggiBuff;
 Hug_t * currentHug;

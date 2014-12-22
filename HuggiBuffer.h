@@ -5,15 +5,19 @@
 
 #define MAX_STORED_HUGS     7
 
-
+/**
+ * Data relative to one hug.
+ */
 typedef struct Hug
 {
-    char id[ID_SIZE+1];
-    char data[DATA_MAX_SIZE+1];
-    long duration;
+    char id[ID_SIZE+1];         //!< The hugger id
+    char data[DATA_MAX_SIZE+1]; //!< The data received from the partner
+    long duration;              //!< The duration of the hug
 } Hug_t;
 
-
+/**
+ * A cyclic buffer for storing when there is no connected device. 
+ */
 class HuggiBuffer {
 
 public:
@@ -21,58 +25,63 @@ public:
 
 
     /**
-     * get a pointer to the next available struct
+     * @return A pointer to the next available slot
      */
     Hug_t* getAvail();
+
     /**
-     * commit the changes made to the next available struct
+     * Add one hug to the buffer. You can get a pointer to 
+     * the next available slot by calling :getAvail().
      */
     void commit();
 
 
     /**
-     * get and remove the oldest hug not already sent
+     * Get the oldest hug in this buffer.
+     * @return A pointer to the oldest hug
      */
      Hug_t* getNext();
 
      /**
-      * remove the last hug returned by getNext()
+      * Remove the oldest hug from this buffer.
+      * The oldest hug is the one returned by :getNext().
       */
      void remove();
 
      /**
-      * get the number of hugs currently in the buffer
+      * Get the number of hugs currently in the buffer.
+      * @return The number of hugs 
       */
      byte getSize() { return size; }
 
      /**
-      * test if the buffer is empty
+      * Test if the buffer is empty
+      * @return true if this buffer is empty, false otherwise.
       */
     bool isEmpty() { return size == 0; }
 
      /**
-      * test if the buffer is full
+      * Test if the buffer is full.
+      * @return true if this buffer is full, false otherwise.
+      *
       */
     bool isFull()  { return size  == MAX_STORED_HUGS; }
 
 private:
-    Hug_t hugs[MAX_STORED_HUGS + 1];
-    byte top;
-    byte bottom;
-    byte size;
+    Hug_t hugs[MAX_STORED_HUGS + 1];  //!< The buffer
+    byte top;                         //!< The top of this buffer, i.e. the next available slot
+    byte bottom;                      //!< The top of this buffer, i.e. the oldest hug
+    byte size;                        //!< The number of hugs in this buffer
 };
 
 
 #ifdef TEST
-#include <iostream>
-void toString(std::ostream&, Hug_t&);
+  #include <iostream>
+  void toString(std::ostream&, Hug_t&);
 #else
-#include <Serial.h>
-#include "Streaming.h"
-void toString(Stream&, Hug_t&);
+  #include <Serial.h>
+  #include "Streaming.h"
+  void toString(Stream&, Hug_t&);
 #endif
-
-
-extern volatile bool triggered;
 
 #endif

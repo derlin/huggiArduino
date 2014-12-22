@@ -23,32 +23,21 @@
 
 // --------------------------
 
+#define DATA_MAX_SIZE       50  //!< Max size of the data sent through HuggiShirt (name)
+#define ID_SIZE             10  //!< Size of an ID (phone number, ex: 0763131212)
 
-#define Syn         "H"
-#define Ack         "OK"
+#define LENGTH_SIZE         1   //!< The length of the data sent is coded with one byte
+#define CHK_SIZE            4   //!< The checksum is four hexadecimal characters
 
+#define DATA_BUFF_SIZE      LENGTH_SIZE+DATA_MAX_SIZE+CHK_SIZE+1 //!< Size of the buffer for incoming data
 
-#define SYN_RL_TIMEOUT    400 // readline timeout
-#define ACK_RL_TIMEOUT    200 // readline timeout
-
-// --------------------------
-
-#define DATA_MAX_SIZE       50      // max size of the data (name)
-#define ID_SIZE             10
-
-#define LENGTH_SIZE         1
-#define CHK_SIZE            4 // checksum is 4 hex characters
-
-#define DATA_BUFF_SIZE      LENGTH_SIZE+DATA_MAX_SIZE+CHK_SIZE+1 // 1:length, data, 4:checksum, 1:newline
-
-#define DATA_FORMAT         "%c%s%04X" // 1:length, data, 4: hex checksum
+#define DATA_FORMAT         "%c%s%04X" //!< Format used to encode data. Length (1B), data, checksum (4B)
 
 // --------------------------
 
-#define INPUT_NBR   2
+#define PRESSURE_INPUT_NBR   2   //!< Number of zones in the pressure sensor. All of them must be pressed for a valid pression.
 
 // --------------------------
-
 
 #define RED     0xFF0000
 #define GREEN   0x00FF00
@@ -61,13 +50,13 @@
 
 // -------------------------
 
+#define EEPROM_ID_ADDR      0     //<! ID is written in eeprom at address 0.
+#define EEPROM_DATA_ADDR    100   //<! data is written in eeprom at address 100.
+#define EEPROM_MAX_ADDRESS  300   //<! Max eeprom address 
 
 
-// -------------------------
 
-#define EEPROM_ID_ADDR      0
-#define EEPROM_DATA_ADDR    100 
-#define EEPROM_MAX_ADDRESS  300
 
+extern volatile bool triggered; //<! Boolean set to true after an interrupt from the pressure sensor
 
 #endif

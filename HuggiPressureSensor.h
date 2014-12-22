@@ -7,27 +7,48 @@
 
 // #define HUGGI_PRESSURE_SENSOR_DEBUG
 
-#define MAX_SAMPLES          4      // samples for calibation
-#define DEFAULT_SENSITIVITY  0.75
+#define MAX_SAMPLES          4     //!< Number of samples for calibation
+#define DEFAULT_SENSITIVITY  0.75  //!< Sensitivity in percent of variation
 
+/**
+ * Holds the pin number and the calibrated value of each input 
+ */
 typedef struct {
-    int pin;
-    int refValue;
+    int pin;        //!< The pin number
+    int refValue;   //!< The value read from the pin during calibration
 } SInput;
 
-
+/**
+ * Helper class to deal with the custom pressure sensor.
+ */
 class HuggiPressureSensor 
 {
     public:
-        HuggiPressureSensor(int *, int);
+        /**
+         * @param pins The pins numbers.
+         * @param nbrOfInputs Number of inputs, or zones on the sensor. Should match pins.length.
+         */
+        HuggiPressureSensor(int * pins, int nbrOfInputs);
+        /**
+         * @return true if the sensor is pressed, false otherwise.
+         */
         bool isPressed();
-        void setSensitivity(double);
+        /**
+         * Change the sensitivity of the sensor. 
+         * @param sensitivity The sensitivity, in percent.
+         */
+        void setSensitivity(double sensitivity);
+        /**
+         * Calibrate the sensor. 
+         * #MAX_SAMPLES samples are read from each of the pin and the average .
+         * value will be set as a reference.
+         */
         void calibrate();
 
     private:
-        int nbrOfInputs;
-        double sensitivity;
-        SInput * inputs;
+        int nbrOfInputs;    //!< Number of zones/inputs of this sensor.
+        double sensitivity; //!< Current sensitivity, in percent.
+        SInput * inputs;    //!< Structure holding the pin number and reference value of each input.
 };
 
 #endif

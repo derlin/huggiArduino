@@ -14,8 +14,8 @@ ISR (ANALOG_COMP_vect)
 void enablePressureInterrupt()
 {
     pinMode(6, INPUT_PULLUP);
-    ADCSRB = 0;           // (Disable) ACME: Analog Comparator Multiplexer Enable
-    ACSR =  _BV (ACI)     // (Clear) Analog Comparator Interrupt Flag
+    ADCSRB = 0;         // (Disable) ACME: Analog Comparator Multiplexer Enable
+    ACSR =  _BV (ACI)   // (Clear) Analog Comparator Interrupt Flag
         | _BV (ACIE)    // Analog Comparator Interrupt Enable
         | _BV (ACIS1);  // ACIS1, ACIS0: Analog Comparator Interrupt Mode Select (trigger on falling edge)
     //ACSR &= ~3; // interrupt on output toggle
