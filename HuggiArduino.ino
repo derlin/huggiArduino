@@ -1,4 +1,11 @@
-// hugginess.ino
+/**
+ * @file    HuggiArduino.ino
+ * @author  Lucy Linder (lucy.derlin@gmail.com)
+ * @date    December, 2014
+ * @brief   Main sketch of the Hugginess project.
+ * 
+ * 
+ */
 
 #include <Serial.h>
 #include <Arduino.h>
@@ -11,27 +18,27 @@
 #include "HuggiArduino.h"
 #include "HuggiBuffer.h"
 
-#define GoFirst(otherId)   strcmp(ID, otherId) < 0
 
-extern Adafruit_NeoPixel strip;
+extern Adafruit_NeoPixel strip; //<! The NeoPixel led strip 
 
-AltSoftSerial altSerial; //On Arduino Uno TX = pin 9 | RX = pin 8
+AltSoftSerial altSerial; //<! The software serial port. On Arduino Uno/LilyPad, TX = pin 9 and RX = pin 8.
 
-// raw incoming data
-char bufferIn[DATA_BUFF_SIZE] = {0};
 
-// outgoing data: contains length, data and checksum
-char dataOut[DATA_BUFF_SIZE]  = {0};
+char bufferIn[DATA_BUFF_SIZE] = {0}; //!< Buffer used for all incoming data and local operations.
+char dataOut[DATA_BUFF_SIZE]  = {0}; //!< Encoded data sent during a hug.
 
 // #define SENSITIVITY 
-int inputs[] = {A0, A2}; 
-HuggiPressureSensor sensor(inputs, PRESSURE_INPUT_NBR);
+int pressureInputs[] = {A0, A2}; //<! Analog pins used for the pressure sensor.
+HuggiPressureSensor sensor(pressureInputs, PRESSURE_INPUT_NBR); //<! The pressure sensor controller.
 
-HuggiBuffer huggiBuff;
-Hug_t * currentHug;
+HuggiBuffer huggiBuff; //<! The cyclic buffer to store incoming hugs.
+Hug_t * currentHug;    //<! Where to store the next hug.
 
 // ---------------
 
+/**
+ * Setup the microcontroller.
+ */
 void setup() 
 {  
   Serial.begin(BT_BAUDRATE);
@@ -41,9 +48,9 @@ void setup()
 
 
   // == DEBUG 
-  /*
+  // *
   currentHug = huggiBuff.getAvail();
-  for(int i = 0; i < 2; i++)
+  for(int i = 0; i < 4; i++)
   {
     sprintf(currentHug->id, "076444848%d", i+1);
     sprintf(currentHug->data, "%d%s%d", i, "hello",i);
@@ -52,7 +59,13 @@ void setup()
     currentHug = huggiBuff.getAvail();
 
   }
-  //*/
+
+  while(true)
+ {
+        if( !sendHugs() ) 
+            break;
+   }
+  //*
   // pressure sensor
   sensor.calibrate();
 
@@ -61,14 +74,10 @@ void setup()
   ledSetup();
 }
 
-// == DEBUG
-void prepareDataOut_debug(char * id, char * myData)
-{
-    char temp[strlen(id)+strlen(myData)+1];
-    sprintf(temp, "%s%s", id, myData);
-    encodeData(dataOut, temp); 
-}
-
+/**
+ * Read the data from EEPROM and encode them once and for all 
+ * in the dataOut buffer.
+ */
 bool setDataOut()
 {
     dataOut[0] = 0; // reset
@@ -98,6 +107,9 @@ bool setDataOut()
 
 // ------------
 
+/**
+ * Main loop.
+ */
 void loop() 
 {
     currentHug = huggiBuff.getAvail();
@@ -136,14 +148,16 @@ void loop()
     }
     
     delay(1000);
-    ledSetColor(0);
+    ledSetColor(NO_COLOR);
 
 
     // bluetooth
     if(Serial.available())
     {
+        ledSetColor(BLUE);
         Serial << "== bt" << nl;
         bt();
+        ledSetColor(NO_COLOR);
         Serial << "!= bt" << nl;
     }
 
@@ -153,7 +167,11 @@ void loop()
 #define DATA_OK  'O'
 
 // --------------
-
+/**
+ * Exchange information through the fiber; do a hug.
+ * @param hug where to store the hug's information.
+ * @return  true if the hug is valid, false otherwise.
+ */
 bool exchange(Hug_t * hug)
 {
     long start = -1;
@@ -209,7 +227,7 @@ bool exchange(Hug_t * hug)
             Serial << c;
             lastReceived = millis();
 
-            if(indexIn < 0) // first char: get the ack
+            if(indexIn < 0) // first char of a line: get the ack
             {
                 otherHasReceivedData = (c == DATA_OK);
                 indexIn = 0;

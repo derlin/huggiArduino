@@ -27,11 +27,11 @@
 #define ID_SIZE             10  //!< Size of an ID (phone number, ex: 0763131212)
 
 #define LENGTH_SIZE         1   //!< The length of the data sent is coded with one byte
-#define CHK_SIZE            4   //!< The checksum is four hexadecimal characters
+#define CHK_SIZE            1   //!< The checksum is one byte (CRC8)
 
 #define DATA_BUFF_SIZE      LENGTH_SIZE+DATA_MAX_SIZE+CHK_SIZE+1 //!< Size of the buffer for incoming data
 
-#define DATA_FORMAT         "%c%s%04X" //!< Format used to encode data. Length (1B), data, checksum (4B)
+#define DATA_FORMAT         "%c%s%c" //!< Format used to encode data. Length (1B), data, checksum (1B)
 
 // --------------------------
 
@@ -44,6 +44,7 @@
 #define BLUE    0x0000FF 
 #define ORANGE  0xCC6600 
 #define YELLOW  0xFFFF00
+#define NO_COLOR   0
 
 #define PURPLE  0x400561
 #define PINK    0x961B7B

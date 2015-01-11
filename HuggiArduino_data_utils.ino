@@ -3,29 +3,33 @@
  * @author  Lucy Linder (lucy.derlin@gmail.com)
  * @date    September, 2014
  * @brief   Handle encoding/decoding of data exchanged through the fiber.
- *
  */
 
 /**
- * Compute the LRC (longitudinal redundancy check) of a string.
- * This kind of checksum can be expressed as "the 8-bit two's-complement 
- * value of the sum of all bytes modulo 2^8."
+ * Compute the CRC8 (cyclic redundancy check, 1 byte) of a string.
+ * This code is based on the CRC8 formulas by Dallas/Maxim and released under 
+ * the therms of the GNU GPL 3.0 license.
+ * See \href  http://www.leonardomiliani.com/en/2013/un-semplice-crc8-per-arduino/ 
+ * for more information.
  * @param s the string
- * @return the LRC
+ * @return the CRC
  */
 int computeChecksum(const char * s)
 {
-    int checksum = 0;
-    const char * p = s;
-
-    while(*p)
-    {
-        checksum = (checksum + *p) & 0xFF;
-        p++;
+    char len = strlen(s);
+    char crc = 0x00;
+    while (len--) {
+        char extract = *s++;
+        for (char i = 8; i; i--) {
+            char sum = (crc ^ extract) & 0x01;
+            crc >>= 1;
+            if (sum) {
+                crc ^= 0x8C;
+            }
+            extract >>= 1;
+        }
     }
-
-    checksum = ((checksum ^ 0xFF) + 1) & 0xFF;
-    return checksum;
+    return crc;
 }
 
 /**
@@ -70,8 +74,7 @@ byte decodeData(const char * encoded, char * decoded)
     }
     decoded[i] = 0;
     
-    int givenChk;
-    sscanf(encoded, "%X", &givenChk);           // get the checksum
+    int givenChk = *encoded;     // get the checksum
     int computedChk = computeChecksum(decoded); // compute the checksum
 
     Serial << "data: " << decoded << " CHK: " << givenChk << " | " << computedChk << ", L is " << length << nl;
