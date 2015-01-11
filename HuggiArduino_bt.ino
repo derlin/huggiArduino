@@ -235,6 +235,8 @@ void bt()
 
             case BT_CMD_SLEEP:
                 while(Serial.available()) Serial.read();
+
+                // TODO: turn off led
                 enterSleep();
                 if(triggered) // pressure detected
                 {

@@ -1,3 +1,15 @@
+/**
+ * @file    HuggiPressureSensor.h
+ * @author  Lucy Linder (lucy.derlin@gmail.com)
+ * @date    November, 2014
+ * @brief   Handle a pressure sensor.
+ * 
+ * This library supports sensor with any number of outputs.
+ * 
+ * Define the variable HUGGI_PRESSURE_SENSOR_DEBUG to print
+ * verbose information about the value of the sensors.
+ */
+
 #ifndef HUGGI_PRESSURE_SENSOR
 #define HUGGI_PRESSURE_SENSOR
 
@@ -11,7 +23,7 @@
 #define DEFAULT_SENSITIVITY  0.75  //!< Sensitivity in percent of variation
 
 /**
- * Holds the pin number and the calibrated value of each input 
+ * Structure used to hold the pin number and the calibrated value of each input 
  */
 typedef struct {
     int pin;        //!< The pin number

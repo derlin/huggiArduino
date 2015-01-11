@@ -1,15 +1,20 @@
+/**
+ * @file    HuggiArduino_leds.ino
+ * @author  Lucy Linder (lucy.derlin@gmail.com)
+ * @date    September, 2014
+ * @brief   utilities to deal with the NeoPixels
+ */
 
-#define LED_STRIP_PIN 3
-#define NB_LEDS 3
-#define LEDS_DEFAULT_BRIGHTNESS 50
+#define LED_STRIP_PIN 3   //<! Digital pin used as output in the Arduino.
+#define NB_LEDS       1   //<! Number of leds in the strip.
+#define LEDS_DEFAULT_BRIGHTNESS 50  //<! Brightness is 50%.
 
 
-#define GLOBAL_STATE_LED     0
-#define SPECIFIC_STATE_LED   1
-#define BUFF_FULL_LED        2
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, LED_STRIP_PIN); //<! The NeoPixel controller.
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(NB_LEDS, LED_STRIP_PIN);
-
+/**
+ * Initialise the led strip. Should be called in the setup.
+ */
 void ledSetup()
 {
   strip.begin();
@@ -17,13 +22,23 @@ void ledSetup()
   strip.show(); // Initialize all pixels to 'off'
 }
 
-
+/**
+ * Set the color of the led. Use 0 to turn it off.
+ * 
+ * @param color The color, in hexadecimal
+ */
 void ledSetColor(uint32_t color)
 {
     strip.setPixelColor(0, color);
     strip.show();
 }
 
+/**
+ * Make the led blink at a frequency of 300ms,
+ * 
+ * @param color The color
+ * @param times The number of blinks
+ */
 void ledBlink(uint32_t color, byte times)
 {
     uint32_t cur_color = strip.getPixelColor(0);
@@ -37,6 +52,6 @@ void ledBlink(uint32_t color, byte times)
 
     }
     
-
+    // set back the previous color
     ledSetColor(cur_color);
 }

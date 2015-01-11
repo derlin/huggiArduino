@@ -1,9 +1,17 @@
+/**
+ * @file    HuggiBuffer.h
+ * @author  Lucy Linder (lucy.derlin@gmail.com)
+ * @date    December, 2014
+ * @brief   Storage class for hugs.
+ *
+ * This file offers a simple cyclic buffer for storing hugs.
+ */
 #ifndef HUGGI_BUFFER
 #define HUGGI_BUFFER
 
 #include "HuggiArduino.h"
 
-#define MAX_STORED_HUGS     7
+#define MAX_STORED_HUGS     7   //!< Capacity of the buffer
 
 /**
  * Data relative to one hug.
@@ -77,10 +85,22 @@ private:
 
 #ifdef TEST
   #include <iostream>
+  /**
+   * @brief Stringify a hug (debug).
+   * 
+   * @param m the stream to write to
+   * @param t the hug
+   */
   void toString(std::ostream&, Hug_t&);
 #else
   #include <Serial.h>
   #include "Streaming.h"
+  /**
+   * @brief Stringify a hug (debug).
+   * 
+   * @param m the stream to write to
+   * @param t the hug
+   */
   void toString(Stream&, Hug_t&);
 #endif
 
