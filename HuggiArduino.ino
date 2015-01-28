@@ -163,9 +163,6 @@ void loop()
 
 }
 
-#define DATA_NOK 'H'
-#define DATA_OK  'O'
-
 // --------------
 /**
  * Exchange information through the fiber; do a hug.
@@ -190,7 +187,7 @@ bool exchange(Hug_t * hug)
     while(sensor.isPressed())
     {
         long ms = millis() - lastReceived;
-        if(ms > 500)
+        if(ms > FIBER_TIMEOUT)
         {
             Serial << "TIMEOUT " << ms << nl;
             break;

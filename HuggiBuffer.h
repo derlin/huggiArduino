@@ -91,7 +91,7 @@ private:
    * @param m the stream to write to
    * @param t the hug
    */
-  void toString(std::ostream&, Hug_t&);
+  void toString(std::ostream& m, Hug_t& t);
 #else
   #include <Serial.h>
   #include "Streaming.h"
@@ -101,7 +101,7 @@ private:
    * @param m the stream to write to
    * @param t the hug
    */
-  void toString(Stream&, Hug_t&);
+  void toString(Stream& m, Hug_t& t);
 #endif
 
 #endif

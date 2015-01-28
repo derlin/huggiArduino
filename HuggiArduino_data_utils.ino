@@ -9,7 +9,7 @@
  * Compute the CRC8 (cyclic redundancy check, 1 byte) of a string.
  * This code is based on the CRC8 formulas by Dallas/Maxim and released under 
  * the therms of the GNU GPL 3.0 license.
- * See \href  http://www.leonardomiliani.com/en/2013/un-semplice-crc8-per-arduino/ 
+ * See <a href="http://www.leonardomiliani.com/en/2013/un-semplice-crc8-per-arduino/">http://www.leonardomiliani.com/en/2013/un-semplice-crc8-per-arduino</a>
  * for more information.
  * @param s the string
  * @return the CRC

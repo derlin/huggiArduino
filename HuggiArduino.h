@@ -33,6 +33,12 @@
 
 #define DATA_FORMAT         "%c%s%c" //!< Format used to encode data. Length (1B), data, checksum (1B)
 
+
+#define DATA_NOK 'H'        //!< Prefix "dataReceived" = true
+#define DATA_OK  'O'        //!< Prefix "dataReceived" = false
+
+// --------------------------
+#define FIBER_TIMEOUT       500  //!< Max delay between two char during an exchange through the fibers.
 // --------------------------
 
 #define PRESSURE_INPUT_NBR   2   //!< Number of zones in the pressure sensor. All of them must be pressed for a valid pression.

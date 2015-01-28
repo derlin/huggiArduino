@@ -65,7 +65,7 @@ void enterSleep()
                                    // so sleep is possible (just a safety pin)  
   enablePressureInterrupt();       // enable the analog comparator
   
-  // power off all the unecessary stuff
+  // power off everything we can
   power_adc_disable();
   power_spi_disable();
   power_timer0_disable();
